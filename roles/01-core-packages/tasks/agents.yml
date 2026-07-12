@@ -29,6 +29,7 @@
 
 - name: Check if Codex is already installed at correct version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
     npm list -g @openai/codex --depth=0 2>/dev/null | grep -q '@openai/codex@{{ codex_version }}$'
   args:
@@ -49,6 +50,7 @@
 
 - name: Verify Codex installed version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
     npm list -g @openai/codex --depth=0 2>/dev/null | grep -q '@openai/codex@{{ codex_version }}$'
   args:
@@ -57,6 +59,7 @@
 
 - name: Check if machine0 CLI is already installed at correct version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
     npm list -g @machine0/cli --depth=0 2>/dev/null | grep -q '@machine0/cli@{{ machine0_version }}$'
   args:
@@ -77,6 +80,7 @@
 
 - name: Verify machine0 CLI installed version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
     npm list -g @machine0/cli --depth=0 2>/dev/null | grep -q '@machine0/cli@{{ machine0_version }}$'
   args:
