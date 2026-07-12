@@ -11,6 +11,9 @@
 - name: Install docker
   import_tasks: docker.yml
 
+- name: Install GitHub CLI
+  import_tasks: gh.yml
+
 - name: Install AI agents
   import_tasks: agents.yml
 
