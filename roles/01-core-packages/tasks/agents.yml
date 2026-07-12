@@ -26,3 +26,63 @@
   args:
     executable: /bin/bash
   changed_when: false
+
+- name: Check if Codex is already installed at correct version
+  ansible.builtin.shell: |
+    set -o pipefail
+    eval "$(mise activate bash)"
+    npm list -g @openai/codex --depth=0 2>/dev/null | grep -q '@openai/codex@{{ codex_version }}$'
+  args:
+    executable: /bin/bash
+  register: codex_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Codex globally via npm
+  ansible.builtin.shell: |
+    eval "$(mise activate bash)"
+    npm install -g @openai/codex@{{ codex_version }}
+  args:
+    executable: /bin/bash
+  register: codex_install
+  changed_when: "'added' in codex_install.stdout or 'changed' in codex_install.stdout"
+  when: codex_check.rc != 0
+
+- name: Verify Codex installed version
+  ansible.builtin.shell: |
+    set -o pipefail
+    eval "$(mise activate bash)"
+    npm list -g @openai/codex --depth=0 2>/dev/null | grep -q '@openai/codex@{{ codex_version }}$'
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Check if machine0 CLI is already installed at correct version
+  ansible.builtin.shell: |
+    set -o pipefail
+    eval "$(mise activate bash)"
+    npm list -g @machine0/cli --depth=0 2>/dev/null | grep -q '@machine0/cli@{{ machine0_version }}$'
+  args:
+    executable: /bin/bash
+  register: machine0_check
+  changed_when: false
+  failed_when: false
+
+- name: Install machine0 CLI globally via npm
+  ansible.builtin.shell: |
+    eval "$(mise activate bash)"
+    npm install -g @machine0/cli@{{ machine0_version }}
+  args:
+    executable: /bin/bash
+  register: machine0_install
+  changed_when: "'added' in machine0_install.stdout or 'changed' in machine0_install.stdout"
+  when: machine0_check.rc != 0
+
+- name: Verify machine0 CLI installed version
+  ansible.builtin.shell: |
+    set -o pipefail
+    eval "$(mise activate bash)"
+    npm list -g @machine0/cli --depth=0 2>/dev/null | grep -q '@machine0/cli@{{ machine0_version }}$'
+  args:
+    executable: /bin/bash
+  changed_when: false
