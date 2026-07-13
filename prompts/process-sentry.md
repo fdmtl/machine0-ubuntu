@@ -35,9 +35,9 @@ For each remaining issue (shortid lowercased; vm name `m0-worker-$runid-<shortid
    machine0 ssh <vm> "mkdir -p ~/task"
    machine0 ssh <vm> "cat > ~/task/instructions.md" < /tmp/issue-<shortid>.md
    ```
-5. Dispatch Codex detached (same command in both modes):
+5. Dispatch Codex detached (same command in both modes). Note `mise x --`: non-interactive SSH shells don't have the mise shims on PATH, so `codex` alone would not be found:
    ```bash
-   machine0 ssh <vm> 'setsid nohup bash -c "codex exec --dangerously-bypass-approvals-and-sandbox - < ~/task/instructions.md > ~/task/codex.log 2>&1" < /dev/null & echo dispatched'
+   machine0 ssh <vm> 'setsid nohup bash -c "mise x -- codex exec --dangerously-bypass-approvals-and-sandbox - < ~/task/instructions.md > ~/task/codex.log 2>&1" < /dev/null & echo dispatched'
    ```
    Confirm you saw `dispatched`.
 
