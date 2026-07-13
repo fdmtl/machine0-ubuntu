@@ -19,6 +19,7 @@ machine0 integrations check m0-worker
 # --- Compose the controller prompt -------------------------------------
 # prompts/process-sentry.md embeds the worker SOP at registration time so
 # prompts/fix-sentry-issue.md stays the single source of truth.
+[[ -s prompts/fix-sentry-issue.md ]] || { echo "Error: prompts/fix-sentry-issue.md missing or empty" >&2; exit 1; }
 composed=$(mktemp /tmp/process-sentry-composed-XXXXXX.md)
 trap 'rm -f "$composed"' EXIT
 
@@ -29,15 +30,21 @@ if grep -q '{{WORKER_SOP}}' "$composed"; then
   echo "Error: {{WORKER_SOP}} marker was not substituted" >&2
   exit 1
 fi
+# awk's getline drops the include silently on a read error — assert the SOP landed.
+grep -q 'worker agent on a disposable VM' "$composed" \
+  || { echo "Error: worker SOP was not embedded into the composed prompt" >&2; exit 1; }
 
 # --- Register prompts ---------------------------------------------------
 register() { # register <profile> <name> <file> <description>
   local profile="$1" name="$2" file="$3" description="$4"
-  if machine0 prompts new "$profile" "$name" --body @"$file" --description "$description" 2>/dev/null; then
-    echo "==> Created prompt '$name' on '$profile'"
-  else
+  # Probe existence explicitly so real errors from new/update surface with
+  # their own stderr instead of being conflated with "already exists".
+  if machine0 prompts get "$profile" "$name" >/dev/null 2>&1; then
     machine0 prompts update "$profile" "$name" --body @"$file" --description "$description"
     echo "==> Updated prompt '$name' on '$profile'"
+  else
+    machine0 prompts new "$profile" "$name" --body @"$file" --description "$description"
+    echo "==> Created prompt '$name' on '$profile'"
   fi
 }
 

@@ -48,7 +48,9 @@ Server-side state this repo cannot create for you:
 ```bash
 # 1. Build both images in parallel ("" suffix → stable names m0-controller / m0-worker;
 #    rebuilding an existing image creates a draft version and auto-promotes it)
-./make-image.sh m0-worker.yml small "" & ./make-image.sh m0-controller.yml small "" & wait
+./make-image.sh m0-worker.yml small "" & p1=$!
+./make-image.sh m0-controller.yml small "" & p2=$!
+wait "$p1" && wait "$p2"
 
 # 2. Register the prompts and set DEV_MODE=true (use --prod for the real thing)
 ./setup-profiles.sh

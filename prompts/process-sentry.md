@@ -20,7 +20,7 @@ Use the Sentry MCP tools available in this session.
 
 ## Phase 2 — Fan out workers (parallel)
 
-For each remaining issue (shortid lowercased; vm name `m0-worker-$runid-<shortid>`; branch `fix/sentry-<shortid>-$runid`):
+For each remaining issue (shortid lowercased; vm name `m0-worker-$runid-<shortid>`; branch `fix/sentry-<shortid>-$runid`). The shortid is external data used in shell commands: it must match `^[a-z0-9-]+$` after lowercasing — if it doesn't, record the issue as SKIPPED (malformed id) and do not process it.
 
 1. Create all worker VMs up front:
    ```bash
