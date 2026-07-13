@@ -1,6 +1,23 @@
 # TODOS
 
-Deferred hardening for the multi-agent Sentry fixer (from the 2026-07-12 eng review).
+Deferred hardening for the multi-agent Sentry fixer (from the 2026-07-12 eng review
+and the 2026-07-13 pre-landing adversarial review).
+
+## [P1 before prod use] Contain the Sentry → autonomous-agent trust boundary
+
+- **What:** The prod flow feeds attacker-controllable Sentry text (title/culprit/stacktrace — anyone who can trigger an error in the product controls it) into `codex exec --dangerously-bypass-approvals-and-sandbox` on a worker holding a GitHub App token with **write** on `fdmtl/machine0`. v1 mitigations landed in the prompts (untrusted-DATA fencing in both prompts; shortid-only in shell command templates; PR body via `--body-file`), but prompt-level fences are not a hard boundary.
+- **Why:** A crafted exception message can attempt prompt injection → poisoned "fix" PR (supply-chain) or token/`~/.codex/auth.json` exfiltration via the worker's unrestricted egress.
+- **Do before running prod (`DEV_MODE=false`) against a real project:**
+  - Scope the worker's GitHub credential to **push-only on `fix/*` branches** of the one repo; require branch protection on `main`.
+  - Add egress allowlisting to `m0-worker.yml` (`06-firewall` currently `default allow outgoing`): permit only github.com, the Sentry API, and the model endpoint.
+  - Keep the human PR review as the trust gate (see PR quality gating below); never auto-merge.
+- **Context:** All three adversarial passes (Red Team, Claude, Codex) named this the dominant risk. `DEV_MODE=true` (the hard default, which substitutes none of this text) is the reason v1 is safe to ship.
+
+## Machine-enforced DEV_MODE / VM-lifecycle guardrails
+
+- **What:** Today `DEV_MODE` and the "only rm `m0-worker-$runid-*`" / "max 3 workers" limits are advisory prompt text the controller LLM interprets — the same LLM that untrusted Sentry text can influence. Move them behind mechanism: Claude Code deny-rules on the controller image (block `machine0 rm` targets not matching `m0-worker-$runid-*`, block `machine0 rm --all`), and a real orphan reaper (VM-creation TTL if machine0 supports one, or a cron/systemd janitor baked into `m0-controller.yml` that removes `m0-worker-*` older than N hours).
+- **Why:** Controller death between fan-out and cleanup leaks billing VMs with repo-write creds; Phase 5 currently only *reports* orphans with a reclaim command. A prompt-injected controller could also ignore the soft limits.
+- **Context:** Orphaned-VM + advisory-gate findings from the adversarial review. Pairs naturally with the script-based orchestration item below (a real scheduler owns lifecycle deterministically).
 
 ## Script-based orchestration for the controller
 

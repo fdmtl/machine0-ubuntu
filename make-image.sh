@@ -32,8 +32,10 @@ trap cleanup EXIT
 
 # --- Pipeline ---------------------------------------------------------
 echo "==> Creating VM '$vm' (size: $size)..."
-machine0 new "$vm" --size "$size"
+# Arm cleanup BEFORE the call: if `machine0 new` provisions the VM but then
+# exits nonzero (timeout, network blip), the trap must still reap it.
 vm_created=true
+machine0 new "$vm" --size "$size"
 
 echo "==> Provisioning '$playbook'..."
 machine0 provision "$vm" "$playbook"
