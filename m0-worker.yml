@@ -1,0 +1,36 @@
+---
+# =============================================================================
+# m0-worker Playbook
+# Worker image for the multi-agent Sentry fixer: normally driven headlessly by
+# the controller via `codex exec`; the m0-worker profile injects gh/codex auth.
+# Usage: ./make-image.sh m0-worker.yml small ""
+# =============================================================================
+
+- hosts: all
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - role: 01-core-packages
+    - role: 02-shell
+    - role: 03-motd
+      vars:
+        motd_type: message
+        motd_title: "[ m0 ] Ubuntu {{ ansible_facts['distribution_version'] }} · Worker"
+        motd_body:
+          - "This VM is normally driven headlessly by the controller"
+          - "via `codex exec` (task files land in ~/task)."
+          - "For a manual run, see the /mcp__machine0__fix-sentry-issue template."
+          - ""
+          - "Built with the m0-worker playbook, fork to customize:"
+          - "-> https://github.com/fdmtl/machine0-ubuntu"
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
+
+  post_tasks:
+    - name: Reboot the machine
+      become: true
+      ansible.builtin.reboot:
+        reboot_timeout: 300

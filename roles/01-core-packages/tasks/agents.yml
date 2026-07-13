@@ -1,8 +1,9 @@
 ---
 - name: Check if Claude Code is already installed at correct version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
-    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}'
+    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
   args:
     executable: /bin/bash
   register: claude_check
@@ -16,13 +17,14 @@
   args:
     executable: /bin/bash
   register: claude_install
-  changed_when: "'added' in claude_install.stdout"
+  changed_when: "'added' in claude_install.stdout or 'changed' in claude_install.stdout"
   when: claude_check.rc != 0
 
 - name: Verify Claude Code installed version
   ansible.builtin.shell: |
+    set -o pipefail
     eval "$(mise activate bash)"
-    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}'
+    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
   args:
     executable: /bin/bash
   changed_when: false

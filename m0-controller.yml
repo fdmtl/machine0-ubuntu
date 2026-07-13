@@ -1,0 +1,36 @@
+---
+# =============================================================================
+# m0-controller Playbook
+# Controller image for the multi-agent Sentry fixer: Claude Code drives the
+# fan-out via the m0-controller profile's /mcp__machine0__process-sentry prompt.
+# Usage: ./make-image.sh m0-controller.yml small ""
+# =============================================================================
+
+- hosts: all
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - role: 01-core-packages
+    - role: 02-shell
+    - role: 03-motd
+      vars:
+        motd_type: message
+        motd_title: "[ m0 ] Ubuntu {{ ansible_facts['distribution_version'] }} · Controller"
+        motd_body:
+          - "Start the Sentry fan-out:"
+          - "$ claude"
+          - "> /mcp__machine0__process-sentry"
+          - ""
+          - "Built with the m0-controller playbook, fork to customize:"
+          - "-> https://github.com/fdmtl/machine0-ubuntu"
+    - role: 06-firewall
+      vars:
+        firewall_allowed_tcp_ports:
+          - "22"
+
+  post_tasks:
+    - name: Reboot the machine
+      become: true
+      ansible.builtin.reboot:
+        reboot_timeout: 300
