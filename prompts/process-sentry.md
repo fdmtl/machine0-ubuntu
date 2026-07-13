@@ -26,7 +26,11 @@ For each remaining issue (shortid lowercased; vm name `m0-worker-$runid-<shortid
    ```bash
    machine0 new m0-worker-$runid-<shortid> --image m0-worker --profile m0-worker --size <small|medium>
    ```
-2. Wait for SSH readiness per VM: poll `machine0 ssh <vm> "true"` up to 30 times, 10 s apart. If a VM never becomes ready, mark that issue FAILED and continue with the others (still do Phase 4 cleanup for it).
+2. Wait for readiness per VM: poll up to 30 times, 10 s apart, until this prints `ready` — SSH alone is NOT enough, because sshd comes up before cloud-init finishes injecting the profile credentials (`~/.codex/auth.json`):
+   ```bash
+   machine0 ssh <vm> 'cloud-init status 2>/dev/null | grep -q done && test -s ~/.codex/auth.json && echo ready'
+   ```
+   If a VM never becomes ready, mark that issue FAILED and continue with the others (still do Phase 4 cleanup for it).
 3. Prepare the instructions file locally as `/tmp/issue-<shortid>.md`:
    - **Dev mode:** the file contains only: `Write a file ~/task/result.txt containing exactly "outcome=dev-ok issue=<shortId>" and then stop.`
    - **Prod mode:** fill the worker SOP template (bottom of this prompt) — substitute `<SENTRY_SHORT_ID>`, `<SENTRY_TITLE>`, `<SENTRY_CULPRIT>`, `<SENTRY_LINK>`, `<RELEASE>`, `<STACKTRACE>`, `<BRANCH>`.
