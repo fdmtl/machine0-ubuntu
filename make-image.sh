@@ -50,8 +50,9 @@ machine0 images save "$vm" "$image"
 # the new build becomes the version that `--image $image` resolves to. A fresh
 # image has a single version that activates on its own; only rebuilds (2+
 # versions) leave a draft behind.
-versions_json=$(machine0 images versions ls "$image" --json)
-if (( $(jq 'length' <<<"$versions_json") > 1 )); then
+versions_json=$(machine0 images versions ls "$image" --json 2>/dev/null || echo '[]')
+version_count=$(jq 'length' <<<"$versions_json" 2>/dev/null || echo 0)
+if (( version_count > 1 )); then
   draft=$(jq -r '[.[] | select(.status == "DRAFT")] | max_by(.version).version // empty' <<<"$versions_json")
   if [[ -n "$draft" ]]; then
     echo "==> Promoting draft version $draft of '$image'..."

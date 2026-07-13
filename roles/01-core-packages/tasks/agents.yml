@@ -3,7 +3,9 @@
   ansible.builtin.shell: |
     set -o pipefail
     eval "$(mise activate bash)"
-    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
+    # npm list can exit non-zero on unrelated peer-dep warnings; the guard below
+    # keeps pipefail from misreading that as absent. grep alone is the verdict.
+    (npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null || true) | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
   args:
     executable: /bin/bash
   register: claude_check
@@ -24,7 +26,9 @@
   ansible.builtin.shell: |
     set -o pipefail
     eval "$(mise activate bash)"
-    npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
+    # Guard npm so an unrelated peer-dep warning cannot fail verification under
+    # pipefail. grep alone decides whether the pinned version is present.
+    (npm list -g @anthropic-ai/claude-code --depth=0 2>/dev/null || true) | grep -q '@anthropic-ai/claude-code@{{ claude_code_version }}$'
   args:
     executable: /bin/bash
   changed_when: false

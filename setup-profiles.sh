@@ -20,7 +20,9 @@ machine0 integrations check m0-worker
 # prompts/process-sentry.md embeds the worker SOP at registration time so
 # prompts/fix-sentry-issue.md stays the single source of truth.
 [[ -s prompts/fix-sentry-issue.md ]] || { echo "Error: prompts/fix-sentry-issue.md missing or empty" >&2; exit 1; }
-composed=$(mktemp /tmp/process-sentry-composed-XXXXXX.md)
+# No .md suffix: GNU mktemp requires the template to END with the X's, and
+# machine0 reads the body by content, not extension.
+composed=$(mktemp /tmp/process-sentry-composed-XXXXXX)
 trap 'rm -f "$composed"' EXIT
 
 awk '/^\{\{WORKER_SOP\}\}$/ { while ((getline line < "prompts/fix-sentry-issue.md") > 0) print line; next } { print }' \
